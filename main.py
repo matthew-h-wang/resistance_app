@@ -219,9 +219,9 @@ class MissionResultScreen(Screen):
 		failcount = 0
 		for vote in self.votestack :
 			if vote == True :
-				self.cardspace.add_widget(ResultLabel(text='Pass',color=(0,1,0,1)))
+				self.cardspace.add_widget(ResultLabel(text='PASS',color=(0,1,0,1)))
 			else :
-				self.cardspace.add_widget(ResultLabel(text='Fail',color=(1,0,0,1)))				
+				self.cardspace.add_widget(ResultLabel(text='FAIL',color=(1,0,0,1)))				
 				failcount += 1
 			c += 1
 
