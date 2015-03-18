@@ -1,0 +1,236 @@
+#:kivy 1.0.9
+#:import Clock kivy.clock.Clock
+
+ResistanceGame:
+    id: game
+    manager: screen_manager
+    orientation: 'vertical'
+    spacing: 10
+
+    n_players: numplayers_screen.numplayers 
+    
+    ScreenManager:
+        controller: game
+        id: screen_manager
+        NumPlayersScreen:
+            id: numplayers_screen
+            name: 'NumPlayersScreen'
+            manager: screen_manager
+            
+            r_count: root.n_resistance
+            s_count: root.n_spies
+            m_counts_str: root.m_counts_str
+
+        PlayerIDScreen:
+            controller: game
+            id: playerid_screen
+            name: 'PlayerIDScreen'
+            manager: screen_manager
+
+            numplayers: root.n_players
+
+        PlayerNameScreen:
+            controller: game
+            id: playername_screen
+            name: 'PlayerNameScreen'
+            manager: screen_manager
+
+        MissionSelectScreen:
+            controller: game
+            id: missionselect_screen
+            name: 'MissionSelectScreen'
+            manager: screen_manager
+        MissionChoiceScreen:
+            controller: game
+            id: missionchoice_screen
+            name: 'MissionChoiceScreen'
+            manager: screen_manager
+        MissionResultScreen:
+            controller: game
+            id: missionresult_screen
+            name: 'MissionResultScreen'
+            manager: screen_manager
+            mission_num: missionselect_screen.mission_num
+        GameResultScreen:
+            controller: game
+            id: gameresult_screen
+            name: 'GameResultScreen'
+            manager: screen_manager
+            resulttext: 'Spies\nWin' if game.s_wins == 3 else 'Resistance\nWins'
+
+
+
+    Button:
+        id: restart
+        size_hint: (1,.15)
+        pos_hint: {'x': 0,'y': 0}
+        text: 'Go Back'
+        on_press: root.go_back()
+
+            
+
+
+<NumPlayersScreen>:
+    numplayers: 7
+    Button:
+        size_hint: (.5, .25)
+        pos_hint:  {'center_x':.5, 'center_y':.75}
+        font_size: 32
+        text: 'Play!'
+        on_press:
+            root.manager.transition.direction = 'left' 
+            root.manager.current = 'PlayerIDScreen'
+    Label:
+        halign: 'center'
+        valign: 'top'
+        font_size: 32
+        size_hint: (1,.2)
+        pos_hint:  {'center_x':.5, 'top':.55}
+        text: str(root.numplayers) + " players\n" + str(root.r_count) + " Resistance VS " + str(root.s_count) + " Spies\n" + "Mission sizes are " + root.m_counts_str
+    Button:
+    	pos_hint: {'center_x': .25, 'center_y':.15}
+        size_hint: (.3,.2)
+        font_size: 48
+        text: '-'
+        on_press: if root.numplayers > 5 : root.numplayers -= 1
+    Button:
+    	pos_hint: {'center_x': .75, 'center_y':.15}
+        size_hint: (.3,.2)
+        font_size: 48
+        text: '+'
+        on_press: if root.numplayers < 10 : root.numplayers += 1
+
+<StartGameButton>:
+    size_hint: (.5,.5)
+    pos_hint: {'center_x': .5, 'center_y': .5}
+    text: 'Begin Game'
+
+<PlayerIDScreen>:
+    playerstack: grid
+    on_numplayers: root.populate_playerstack()
+
+    GridLayout:
+        id: grid
+        cols: 2
+        rows: 6
+
+
+<PlayerNameScreen>:
+    current_name: namebox
+    id_button: show
+
+    FloatLayout:
+        TextInput:
+            id: namebox
+            pos_hint: {'center_x': .5, 'center_y':.8}
+            size_hint: (.5,.2)
+            multiline: False
+            focus: False
+            on_focus: self.focus and Clock.schedule_once( lambda dt: self.select_all())
+        Label:
+            font_size: 32
+            pos_hint: {'center_x': .5, 'center_y':.5}
+            text: ('Resistance' if root.current_ID else 'Spy') if  (root.id_button.state == 'down') else ''
+        Button:
+            id: show
+            text: 'Show Team'
+            size_hint: (.3, .3)
+            pos_hint: {'center_x': .5, 'center_y':.25}
+            on_press:
+                root.current_button.disabled = True
+
+<MissionSelectScreen>:
+    playerstack: grid
+    gobutton: go
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 10
+        
+        Button:
+            id: go
+            color: (0,1,0,1)
+            size_hint: (1,.2)
+            pos_hint: {'center_x':.5, 'top': 1}
+            text: 'Begin Mission ' + str(root.mission_num) + '\n' + str(root.selected_count) + ' out of ' + str(root.mission_count) + ' selected'
+            on_press: root.start_mission()
+        GridLayout:
+            id: grid
+            cols: 2
+            rows: 6
+
+<MissionChoiceScreen>:
+    dragspace: dragspace
+    passcard: passcard
+    failcard: failcard
+    Button:
+        id: dragspace
+        pos_hint: {'center_x': .5, 'top': 1}
+        size_hint: (.25, .2)
+        text: 'Drag card here'
+        disabled: True
+    Label: 
+        halign: 'center'
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        text: (root.playerstack[-1] + '\'s vote') if root.playerstack else '' 
+    PassCard: 
+        id: passcard
+        on_touch_up: root.add_pass()
+        center_x: root.width * .25
+        center_y: root.height * .25
+    FailCard: 
+        id: failcard
+        center_x: root.width * .75
+        center_y: root.height * .25
+        on_touch_up: root.add_fail()
+
+
+<PassCard>:
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, .5
+        Rectangle:
+            size: root.size
+    do_rotation: False 
+    do_scale: False
+    size_hint: (.2,.2)
+    Label:
+        color: (0,1,0,1)
+        text: 'PASS'
+
+<FailCard>:
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, .5
+        Rectangle:
+            size: root.size
+    do_rotation: False
+    do_scale: False
+    size_hint: (.2,.2)
+    Label:
+        color: (1,0,0,1)
+        text: 'FAIL'
+
+<ResultLabel>:
+    font_size: 32
+
+<MissionResultScreen>:
+    revealbutton:revealbutton
+    cardspace:cardspace
+    BoxLayout:
+        orientation: 'vertical'
+        id:cardspace
+        size_hint: (.5,.5)
+        pos_hint: {'center_y': .75, 'center_x': .5}
+    Button:
+        id: revealbutton
+        size_hint: (.5,.2)
+        pos_hint: {'center_y': .25, 'center_x': .5}
+        text: 'Continue' if root.revealed else 'Reveal'
+        on_press: root.reveal()
+
+<GameResultScreen>:
+    Label:
+    	halign: 'center'
+        pos_hint: {'center_y': .5, 'center_x': .5}
+        font_size: 64
+        text: root.resulttext
